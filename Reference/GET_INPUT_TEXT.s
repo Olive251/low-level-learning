@@ -1,0 +1,36 @@
+; ROM routines
+define		SCINIT		$ff81 ; initialize/clear screen
+define		CHRIN		$ffcf ; input character from keyboard
+define		CHROUT		$ffd2 ; output character to screen
+define		SCREEN		$ffed ; get screen size
+define		PLOT		$fff0 ; get/set cursor coordinates
+
+	JSR SCINIT
+	LDA #$A0	; CODE FOR BLACK SPACE/CURSOR
+	JSR CHROUT
+	LDA #$83	; MOVES CURSOR LEFT ONE POSITION
+	JSR CHROUT
+	
+
+GET_CHAR:
+	JSR CHRIN
+	CMP #$00
+	BEQ GET_CHAR
+
+	CMP #97		; COMPARE INPUT WITH CODE 97, CHAR 'a'
+	BCC UPPERCASE	; ...PROCESS AS AN UPPERCASE LETTER
+	
+	CMP #65		;COMP INPUT CHAR WITH A
+	BCC GET_CHAR	;...IF LOWER THAN 'A' THEN GET ANOTHER CHAR
+	
+	CMP #91		;COMP INPUT CHAR WITH Z+1
+	BCS GET_CHAR	;...IF HIGHER THAN Z THEN GET ANOTHER CHAR
+	
+	JSR CHROUT
+
+	LDA #$A0	; CODE FOR BLACK SPACE/CURSOR
+	JSR CHROUT
+	LDA #$83	; MOVES CURSOR LEFT ONE POSITION
+	JSR CHROUT
+
+	JMP GET_CHAR
