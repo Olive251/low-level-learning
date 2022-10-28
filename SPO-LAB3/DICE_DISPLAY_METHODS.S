@@ -1,3 +1,17 @@
+define WIDTH 	12 ; width of graphic
+define HEIGHT 	12 ; height of graphic 
+ 
+ 	lda #$29	; create a pointer at $10
+ 	sta $10		;   which points to where
+ 	lda #$03	;   the graphic should be drawn
+ 	sta $11
+ 
+ 	lda #$00	; number of rows we've drawn
+ 	sta $12		;   is stored in $12
+ 
+ 	ldx #$00	; index for data
+ 	ldy #$00	; index for screen column
+
 SELECT_DICE_SPRITE:
 	LDA ROLLS
 

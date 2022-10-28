@@ -15,6 +15,7 @@ define		PLOT				$fff0 ; get/set cursor coordinates
 define		INPUT				$2000
 define		ROLL_COUNT			$2010
 define		ROLLS				$2020
+define		GRAPHIC				$4000
 ;Variables
 define		WIDTH				12
 define		HEIGHT				12
@@ -89,6 +90,7 @@ READBACK_3:			; OUTPUT MSG_FIN SO THAT SCREEN READS "X DICE SELECTED". (X BEING 
 ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 ; ROLL DICE & DISPLAY <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+;	TODO - RECONFIGUE TO SAVE THE FULL GRAPHIC IN POINTER INSTEAD OF ON-SCREEN, THEN ACESS AND PRINT GRAPHIC FROM POINTER
 ROLL_PREP:
 	LDY #00
 	LDA INPUT
@@ -106,74 +108,37 @@ ROLL_DICE:
 	BCC ROLL_DICE
 
 	STA ROLLS
-	JMP DISPLAY_SETUP
+	JMP SET_GRAPHIC
 
-DISPLAY_SETUP:
-	LDA #$29	; create a pointer at $10
- 	STA $10		;   which points to where
- 	LDA #$03	;   the graphic should be drawn
- 	STA $11
- 
- 	LDA #$00	; number of rows we've drawn
- 	STA $12		;   is stored in $12
- 
- 	LDX #$00	; index for data
- 	LDY #$00	; index for screen colum
-
-SET_SPRITE:
+SET_GRAPHIC:	; TODO - RESET THESE BRANCHES TO CORRECT LOAD
 	LDA ROLLS
 	CMP #01
 	BEQ LOAD_D1
 	CMP #02
-	BEQ LOAD_D2
+	BEQ LOAD_D1
 	CMP #03
-	BEQ LOAD_D3
+	BEQ LOAD_D1
 	CMP #04
-	BEQ LOAD_D4
+	BEQ LOAD_D1
 	CMP #05
-	BEQ LOAD_D5
+	BEQ LOAD_D1
 	CMP #06
-	BEQ LOAD_D6
+	BEQ LOAD_D1
 
 LOAD_D1:
 	LDA d_1, X
-	JMP DISPLAY_SPRITE
-
-LOAD_D2:
-	LDA d_2, X
-	JMP DISPLAY_SPRITE
-
-LOAD_D3:
-	LDA d_3, X
-	JMP DISPLAY_SPRITE
-
-LOAD_D4:
-	LDA d_4, X
-	JMP DISPLAY_SPRITE
-
-LOAD_D5:
-	LDA d_5, X
-	JMP DISPLAY_SPRITE
-
-LOAD_D6:
-	LDA d_6, X
-	JMP DISPLAY_SPRITE
-
-DISPLAY_SPRITE:		; can't have full display function for each d sprite, otherwise 5 & 6 are outside of branch range
-					; Currently only displays a cube, partially in wrong colors
-	STA ($10), Y
+	STA ($10), y
 	INX
 	INY
 	CPY #WIDTH
- 	BNE DISPLAY_SPRITE
-   
- 	INC $12			; increment row counter
- 
- 	LDA #HEIGHT		; are we done yet?
- 	CMP $12
- 	BEQ END			; ...exit if we are
- 
- 	LDA $10			; load pointer
+	BNE LOAD_D1
+
+	INC $12 	; INCREMENT ROW COUNTER
+
+	LDA #HEIGHT	; ITEM YET LOADED?
+	CMP $12
+	BEQ PRE_DISPLAY
+	LDA $10			; load pointer
  	CLC
  	ADC #$20		; add 32 to drop one row
  	STA $10
@@ -182,7 +147,31 @@ DISPLAY_SPRITE:		; can't have full display function for each d sprite, otherwise
  	STA $11
  
  	LDY #$00
- 	BEQ DISPLAY_SPRITE
+ 	BEQ PRE_DISPLAY
+LOAD_D2:
+	
+LOAD_D3:
+
+LOAD_D4:
+
+LOAD_D5:
+
+LOAD_D6:
+
+PRE_DISPLAY:
+	LDA #$29	; create a pointer at $10
+ 	STA $10		;   which points to where
+ 	LDA #$03	;   the graphic should be drawn
+ 	STA $11
+ 
+ 	LDA #$00	; number of rows we've drawn
+ 	STA $12		;   is stored in $12
+
+	LDX #$00	; index for data
+ 	LDY #$00	; index for screen colum 	
+DISPLAY_GRAPHIC:
+
+ 	
 ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 
