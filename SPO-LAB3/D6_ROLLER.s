@@ -112,9 +112,12 @@ ROLL_DICE:
 
 SET_GRAPHIC:	; TODO - RESET THESE BRANCHES TO CORRECT LOAD
 
-	LDA 
+	LDX #$00
+	LDY #$00
 
-	LDA ROLLS
+	LDA #$00
+	STA $12
+
 	CMP #01
 	BEQ LOAD_D1
 	CMP #02
@@ -129,6 +132,30 @@ SET_GRAPHIC:	; TODO - RESET THESE BRANCHES TO CORRECT LOAD
 	BEQ LOAD_D1
 
 LOAD_D1:
+	LDA d_1, X
+	STA <GRAPHIC, Y
+	INX
+	INY
+	CPY #WIDTH
+	BNE LOAD_D1
+
+	INC $12
+
+	LDA #HEIGHT
+	CMP $12
+	BEQ PRE_DISPLAY
+
+	LDA <GRAPHIC
+	CLC
+	ADC #$20
+	STA <GRAPHIC
+	LDA >GRAPHIC
+	ADC #$00
+	STA >GRAPHIC
+
+	LDY #$00
+	BEG LOAD_D1
+
 LOAD_D2:
 	
 LOAD_D3:
@@ -149,9 +176,31 @@ PRE_DISPLAY:
  	STA $12		;   is stored in $12
 
 	LDX #$00	; index for data
- 	LDY #$00	; index for screen colum 	
+ 	LDY #$00	; index for screen colum	
 DISPLAY_GRAPHIC:
+	LDA GRAPHIC, x
+	STA ($10), y
+	INX
+	INY 
+	CPY #WIDTH
+	BNE DISPLAY_GRAPHIC
 
+	INC $12
+
+	LDA #HEIGHT
+	CMP $12
+	BEQ END
+
+	LDA $10
+	CLC
+	ADC #$20
+	STA $10
+	LDA $11
+	ADC #$00
+	STA $11
+
+	LDY #$00
+	BEQ DISPLAY_GRAPHIC
  	
 ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
