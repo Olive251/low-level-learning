@@ -131,6 +131,11 @@ SET_GRAPHIC:	; TODO - RESET THESE BRANCHES TO CORRECT LOAD AFTER MAKING WORKING 
 	CMP #06
 	BEQ LOAD_D1
 
+	; Need to build all the graphics in different places in memory 
+	; Use dice roll to set location of graphics instead of baked in location - subtract one from the roll to use 0-5 instead of 1-6
+	; use ROLL at $X, and for each additional graphic ASL 4 times for X*16
+	; then branch when determing which address to load graphic from (choosing the correct dice for the roll)
+
 LOAD_D1:			; Currently saves only the first row of the graphic
 					; Still concerned with how the branching is going to work with the branching range restrictions of 6502
 	LDA d_1, X
