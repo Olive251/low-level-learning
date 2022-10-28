@@ -15,7 +15,7 @@ define		PLOT				$fff0 ; get/set cursor coordinates
 define		INPUT				$2000
 define		ROLL_COUNT			$2010
 define		ROLLS				$2020
-define		GRAPHIC				$4000
+define		GRAPHIC				$2500
 ;Variables
 define		WIDTH				12
 define		HEIGHT				12
@@ -110,7 +110,7 @@ ROLL_DICE:
 	STA ROLLS
 	JMP SET_GRAPHIC
 
-SET_GRAPHIC:	; TODO - RESET THESE BRANCHES TO CORRECT LOAD
+SET_GRAPHIC:	; TODO - RESET THESE BRANCHES TO CORRECT LOAD AFTER MAKING WORKING GRAPHICS LOADERS/DISPLAY
 
 	LDX #$00
 	LDY #$00
@@ -131,9 +131,10 @@ SET_GRAPHIC:	; TODO - RESET THESE BRANCHES TO CORRECT LOAD
 	CMP #06
 	BEQ LOAD_D1
 
-LOAD_D1:
+LOAD_D1:			; Currently saves only the first row of the graphic
+					; Still concerned with how the branching is going to work with the branching range restrictions of 6502
 	LDA d_1, X
-	STA <GRAPHIC, Y
+	STA $2500, Y
 	INX
 	INY
 	CPY #WIDTH
@@ -145,17 +146,16 @@ LOAD_D1:
 	CMP $12
 	BEQ PRE_DISPLAY
 
-	LDA <GRAPHIC
+	LDA $2500
 	CLC
 	ADC #$20
-	STA <GRAPHIC
-	LDA >GRAPHIC
+	STA $2500
+	LDA $2501
 	ADC #$00
-	STA >GRAPHIC
+	STA $2501
 
 	LDY #$00
-	BEG LOAD_D1
-
+	BEQ LOAD_D1
 LOAD_D2:
 	
 LOAD_D3:
@@ -177,7 +177,9 @@ PRE_DISPLAY:
 
 	LDX #$00	; index for data
  	LDY #$00	; index for screen colum	
-DISPLAY_GRAPHIC:
+
+	JMP DISPLAY_GRAPHIC
+DISPLAY_GRAPHIC:	;prints what it has available correctly (first row of the graphic)
 	LDA GRAPHIC, x
 	STA ($10), y
 	INX
