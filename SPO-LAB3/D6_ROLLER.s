@@ -11,11 +11,21 @@ define		CHRIN				$ffcf ; input character from keyboard
 define		CHROUT				$ffd2 ; output character to screen
 define		SCREEN				$ffed ; get screen size
 define		PLOT				$fff0 ; get/set cursor coordinates
-; Memory locations
-define		INPUT				$2000
-define		ROLL_COUNT			$2010
-define		ROLLS				$2020
-define		GRAPHIC				$2500
+
+; Memory locations		;add low and hi pointer for graphics
+define 		TEMP_X				$20
+define		TEMP_Y				$21
+define		TEMP_A				$22
+
+define		INPUT				$50
+define		ROLL_COUNT			$55
+define		ROLLS				$60
+
+define		GRAPHIC_PTR_LO		$2000
+define		GRAPHIC_PTR_HI		$2001
+define		SCREEN_PTR_LO		$3000
+define		SCREEN_PTR_HI		$3001
+
 ;Variables
 define		WIDTH				12
 define		HEIGHT				12
@@ -43,7 +53,7 @@ GET_CHAR:
 	CMP #$00
 	BEQ GET_CHAR
 
-	CMP #13			; User presses enter to set input as complete... have been unable to make this function as desired
+	CMP #13			; User presses enter to set input as complete
 	BEQ FINISH_IN
 	
 	CMP #48		    ; COMP INPUT CHAR WITH 0
@@ -52,7 +62,7 @@ GET_CHAR:
 	CMP #58		    ; COMP INPUT CHAR WITH 9 + 1
 	BCS GET_CHAR	; ...IF HIGHER THAN 9 THEN GET ANOTHER CHAR
 	
-	STA INPUT, x    ; Should be storing starting at memloc 2000, starts store at
+	STA INPUT, x    
 	JSR CHROUT		; Displays char from keyboard input
 	INX
 	JMP CURSOR
@@ -89,8 +99,7 @@ READBACK_3:			; OUTPUT MSG_FIN SO THAT SCREEN READS "X DICE SELECTED". (X BEING 
 	BNE READBACK_3
 ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-; ROLL DICE & DISPLAY <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-;	TODO - RECONFIGUE TO SAVE THE FULL GRAPHIC IN POINTER INSTEAD OF ON-SCREEN, THEN ACESS AND PRINT GRAPHIC FROM POINTER
+; ROLL DICE <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 ROLL_PREP:
 	LDY #00
 	LDA INPUT
@@ -109,112 +118,22 @@ ROLL_DICE:
 
 	STA ROLLS
 	JMP SET_GRAPHIC
+;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-SET_GRAPHIC:	; TODO - RESET THESE BRANCHES TO CORRECT LOAD AFTER MAKING WORKING GRAPHICS LOADERS/DISPLAY
+; DISPLAY ROLLS <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-	LDX #$00
-	LDY #$00
-
-	LDA #$00
-	STA $12
-
-	CMP #01
-	BEQ LOAD_D1
-	CMP #02
-	BEQ LOAD_D1
-	CMP #03
-	BEQ LOAD_D1
-	CMP #04
-	BEQ LOAD_D1
-	CMP #05
-	BEQ LOAD_D1
-	CMP #06
-	BEQ LOAD_D1
-
-	; Need to build all the graphics in different places in memory 
 	; Use dice roll to set location of graphics instead of baked in location - subtract one from the roll to use 0-5 instead of 1-6
 	; use ROLL at $X, and for each additional graphic ASL 4 times for X*16
 	; then branch when determing which address to load graphic from (choosing the correct dice for the roll)
 
-LOAD_D1:			; Currently saves only the first row of the graphic
-					; Still concerned with how the branching is going to work with the branching range restrictions of 6502
-	LDA d_1, X
-	STA $2500, Y
-	INX
-	INY
-	CPY #WIDTH
-	BNE LOAD_D1
 
-	INC $12
 
-	LDA #HEIGHT
-	CMP $12
-	BEQ PRE_DISPLAY
-
-	LDA $2500
-	CLC
-	ADC #$20
-	STA $2500
-	LDA $2501
-	ADC #$00
-	STA $2501
-
-	LDY #$00
-	BEQ LOAD_D1
-LOAD_D2:
-	
-LOAD_D3:
-
-LOAD_D4:
-
-LOAD_D5:
-
-LOAD_D6:
-
-PRE_DISPLAY:
-	LDA #$29	; create a pointer at $10
- 	STA $10		;   which points to where
- 	LDA #$03	;   the graphic should be drawn
- 	STA $11
- 
- 	LDA #$00	; number of rows we've drawn
- 	STA $12		;   is stored in $12
-
-	LDX #$00	; index for data
- 	LDY #$00	; index for screen colum	
-
-	JMP DISPLAY_GRAPHIC
-DISPLAY_GRAPHIC:	;prints what it has available correctly (first row of the graphic)
-	LDA GRAPHIC, x
-	STA ($10), y
-	INX
-	INY 
-	CPY #WIDTH
-	BNE DISPLAY_GRAPHIC
-
-	INC $12
-
-	LDA #HEIGHT
-	CMP $12
-	BEQ END
-
-	LDA $10
-	CLC
-	ADC #$20
-	STA $10
-	LDA $11
-	ADC #$00
-	STA $11
-
-	LDY #$00
-	BEQ DISPLAY_GRAPHIC
- 	
 ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-
+; CLEANUP >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 END:				; Implemented to prevent old input from remaining in memory and being displayed during readback_pt1
-					; copy from <http://6502.org/source/general/clearmem.htm>
-	BRK				; temp for viewing values at end of program before clearing mem
+					; copied from <http://6502.org/source/general/clearmem.htm>
+	BRK				; TODO- CLEAR AFTER TESTING ; temp for viewing values at end of program before clearing mem
 	LDA #$00        ; Set up zero value
     TAY             ; Initialize index pointer
 CLRMEM:
@@ -223,14 +142,18 @@ CLRMEM:
     DEX             ; Decrement counter
 	BNE CLRMEM     ; Not zero, continue checking
     BRK
+;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-
-; DISPLAY TEXT <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+; TEXT TO DISPLAY <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 MSG:
-	DCB "E","N","T","E","R",32,"N","U","M","B","E","R",32,"O","F",32,"D","I","C","E",32,"T","O",32,"R","O","L","L",".",".",".",00
+	DCB "E","N","T","E","R",32,"N","U","M","B","E","R",32,"O","F",32,"D","I","C","E",32,"T","O",32,"R","O","L","L",".",".",".",
+	DCB "(","C","u","r","r","e","n","t","l","y",32,"c","a","n",32,"o","n","l","y",32,"r","o","l","l",32,"o","n","e",")",00
 MSG_FIN:
 	DCB 32,"D","I","C","E",32,"S","E","L","E","C","T","E","D",00
+
 ; GRAPHICS <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+*=$4000
+
 d_1:          
 dcb 04,04,04,04,04,04,04,04,04,04,04,04
 dcb 04,00,00,00,00,00,00,00,00,00,00,04
@@ -244,7 +167,6 @@ dcb 04,00,00,00,00,00,00,00,00,00,00,04
 dcb 04,00,00,00,00,00,00,00,00,00,00,04
 dcb 04,00,00,00,00,00,00,00,00,00,00,04
 dcb 04,04,04,04,04,04,04,04,04,04,04,04
-
 
 d_2:
 dcb 04,04,04,04,04,04,04,04,04,04,04,04
