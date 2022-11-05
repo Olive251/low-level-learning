@@ -119,21 +119,22 @@ ROLL_DICE:
 	BCC ROLL_DICE
 
 	STA ROLLS
-	; JMP LOAD_GRAPHICS
+	JMP LOAD_GRAPHICS
 ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 ; DISPLAY ROLLS <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 	; Use the roll to determine where to load graphic from/which graphic
 
-load_graphics:
+LOAD_GRAPHICS:
 ; starting conditions
 ; X = x position on the screen
 ; Y = y position on the screen
 ; A = graphic (0 or 1 or 2)
 
 
-	LDA #$00 		; graphic selector
+	; LDA #$00 		; graphic selector ; TODO - ADD LOGIC TO DETERMINE GRAPHIC BASED ON ROLL RESULT
+	LDA ROLLS
 	LDX #$C
 	LDY #$B
 
@@ -146,9 +147,9 @@ load_graphics:
 	LDA #$00		; start with 0 in the hi byte of the pointer
 	STA SCREEN_PTR_HI
 
-	; multiply the Y value by 256
+	; multiply the Y value by 32
 	; ... low byte is in A	
-	; ... high byte is in SCREEN_POINTER_HI
+	; ... high byte is in SCREEN_PTR_HI
 	TYA
 	ASL
 	ROL SCREEN_PTR_HI
@@ -162,29 +163,29 @@ load_graphics:
 	ROL SCREEN_PTR_HI
 
 	; add X to screen location
-	; ... low byte gets stored to SCREEN_POINTER_LO
-	; ... high byte still in SCREEN_POINTER_HI
+	; ... low byte gets stored to SCREEN_PTR_LO
+	; ... high byte still in SCREEN_PTR_HI
 	CLC
 	ADC TEMP_X
-	STA SCREEN_POINTER_LO
+	STA SCREEN_PTR_LO
 	LDA #$00
-	ADC SCREEN_POINTER_HI
-	STA SCREEN_POINTER_HI
+	ADC SCREEN_PTR_HI
+	STA SCREEN_PTR_HI
 
 	; add $0200 to the pointer
 	; ... we skip the low byte because it's 00
 	CLC
 	LDA #$02
-	ADC SCREEN_POINTER_HI
-	STA SCREEN_POINTER_HI
+	ADC SCREEN_PTR_HI
+	STA SCREEN_PTR_HI
 
- 	LDA #$00	; number of rows we've drawn
- 	STA $12		;   is stored in $12
+ 	LDA #$00	; number of rows drawn
+ 	STA $12		;   stored in $12
  
  	LDX #$00	; index for data
  	LDY #$00	; index for screen column
  
-	LDA TEMP_A
+	LDA  TEMP_A
  
 	ASL 
 	ASL 
@@ -192,24 +193,27 @@ load_graphics:
 	ASL
 	ASL
 	ASL
-	STA GRAPHIC_POINTER_LO
+	STA GRAPHIC_PTR_LO
 	LDA #>GRAPHICS
-	STA GRAPHIC_POINTER_HI
+	STA GRAPHIC_PTR_HI
+	JMP DRAW_GRAPHIC
 
-draw_graphic:
-	STY TEMP_Y
+DRAW_GRAPHIC:
+	;	ISSUE - Currently is only drawing the first line of the graphic
+
+	STY TEMP_Y	; store Y, moves X to Y
 	TXA
 	TAY
-	LDA (GRAPHIC_POINTER_LO),y	; THROWS SYNTAX ERROR IN EMULATOR
+	LDA (GRAPHIC_PTR_LO),y	
 
 	LDY TEMP_Y
-	STA (SCREEN_POINTER_LO),y	; THROWS SYNTAX ERROR IN EMULATOR
+	STA (SCREEN_PTR_LO),y		
 	LDA #<GRAPHICS
 
 	INX
 	INY
 	CPY #WIDTH
-	BNE draw_graphic
+	BNE DRAW_GRAPHIC
 
 	INC $12		; INCREMENTING ROW COUNTER
 
@@ -219,14 +223,14 @@ draw_graphic:
 
 	LDA $10
 	CLC
-	ADC $20		; ADD 32 TO DROP A ROW
+	ADC $20		; ADD 32($20) TO DROP A ROW
 	STA $10
 	LDA $11
 	ADC #$00
 	STA $11
 
 	LDY #$00
-	BEQ draw_graphic
+	BEQ DRAW_GRAPHIC
 ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 ; CLEANUP >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
