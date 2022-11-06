@@ -8,7 +8,9 @@ _start:
     mov     $min,%r15           /* loop index */
 
 loop:
-    /* ... body of the loop ... do something useful here ... */
+    /* ... body of the loop ... */
+
+    /* end of loop body */
 
     inc     %r15                /* increment index */
     cmp     $max,%r15           /* see if we're done */
