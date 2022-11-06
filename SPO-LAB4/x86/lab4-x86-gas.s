@@ -54,6 +54,10 @@ determine_digits:
     cmp     $10, %r10
     jl  oneD_output     
 end:
+    add     $1, %r15
+    cmp     max, %r15
+    jne     determine_digits
+
     movq    $0, %rdi    /* exit status */
     movq    $60, %rax   /* syscall sys_exit */
     syscall
