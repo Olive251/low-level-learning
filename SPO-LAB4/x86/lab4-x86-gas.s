@@ -43,8 +43,8 @@ oneD_output:
 
 
 _start:
-    mov     %r14, ten
-    mov     %r15, min
+    movq     $10, %r14
+    movq     $0, %r15
     
 determine_digits:
     mov     %r10, %r14
