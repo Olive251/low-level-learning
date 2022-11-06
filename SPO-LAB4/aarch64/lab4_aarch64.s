@@ -16,7 +16,7 @@ twoD_output:
     add     x23, x23, '0'
 
     adr     x21, msg_twoD+5
-    strb    w22, [x21]      /* if storing less that 64 bits have to us low register (w20 instead of x20)*/
+    strb    w22, [x21]      /* if storing less that 64 bits have to use low register (w20 instead of x20)*/
     adr     x21, msg_twoD+6
     strb    w23, [x21]
 
@@ -63,7 +63,7 @@ exit:
     mov     x0, 0           /* status -> 0 */
     mov     x8, 93          /* exit is syscall #93 */
     svc     0               /* invoke syscall */
-    
+
 .data
 
 msg_oneD:    .ascii      "Loop #\n"
